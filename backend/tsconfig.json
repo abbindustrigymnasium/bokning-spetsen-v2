@@ -1,0 +1,10 @@
+{
+	"extends": "../tsconfig.json",
+	"compilerOptions": {
+		"outDir": "../build/backend",
+		"rootDir": "..",
+		"noEmit": false,
+		"declaration": true
+	},
+	"include": ["./**/*.ts"]
+}
