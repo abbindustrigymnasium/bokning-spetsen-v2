@@ -29,12 +29,36 @@ npm run dev
 npm run dev -- --open
 ```
 
+The Fastify API runs separately from the SvelteKit frontend:
+
+```sh
+pnpm run dev:backend
+```
+
+It listens on `http://localhost:3001` by default. The API exposes
+`GET /api/health`, `GET /api/users`, and `POST /api/users`. Set `PORT` or
+`HOST` to change the bind address. User routes use the Prisma schema and
+require `DATABASE_URL` to be set.
+
+Regenerate the Prisma client after changing the schema with:
+
+```sh
+pnpm run db:generate
+```
+
 ## Building
 
 To create a production version of your app:
 
 ```sh
 npm run build
+```
+
+Build and start the API with:
+
+```sh
+pnpm run build:backend
+pnpm run start:backend
 ```
 
 You can preview the production build with `npm run preview`.
