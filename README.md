@@ -46,6 +46,19 @@ Regenerate the Prisma client after changing the schema with:
 pnpm run db:generate
 ```
 
+Seed the local development database with sample users and bookings for the current week:
+
+```sh
+nix-shell --run 'pnpm run db:seed:dev'
+```
+
+The production seed is intentionally explicit and creates only the administrator account and
+permission. Run it only against the intended production database:
+
+```sh
+nix-shell --run 'pnpm run db:seed:prod'
+```
+
 ## Building
 
 To create a production version of your app:
