@@ -17,6 +17,15 @@ model User {
   bookings    Booking[]
 }
 
+model Site {
+	id        String    @id @default(uuid())
+	name      String    @unique
+	active    Boolean   @default(true)
+	createdAt DateTime  @default(now())
+	updatedAt DateTime  @updatedAt
+	bookings  Booking[]
+}
+
 model Permission {
   id          String   @id @default(uuid())
   name        String   @unique
@@ -28,16 +37,19 @@ model Permission {
 }
 
 model Booking {
-  id        String   @id @default(uuid())
-  userId    String
-  dayIndex  DateTime @db.Date
+	id        String   @id @default(uuid())
+	userId    String
+	siteId    String
+	dayIndex  DateTime @db.Date
   startsAt  DateTime @db.Timestamptz(3)
   endsAt    DateTime @db.Timestamptz(3)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+	user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+	site Site @relation(fields: [siteId], references: [id], onDelete: Restrict)
 
-  @@index([dayIndex])
-  @@index([userId, dayIndex])
+	@@index([dayIndex])
+	@@index([userId, dayIndex])
+	@@index([siteId, dayIndex])
 }

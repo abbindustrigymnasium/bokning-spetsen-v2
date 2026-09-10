@@ -57,6 +57,19 @@ function decodeSession(value?: string) {
 	}
 }
 
+export async function authenticatedUser(request: FastifyRequest, prisma: PrismaClient) {
+	const session = decodeSession(cookies(request)[sessionCookie]);
+	if (!session) return undefined;
+	return prisma.user.findUnique({
+		where: { id: session.userId },
+		include: { permissions: { select: { slug: true } } }
+	});
+}
+
+export function isAdmin(user: { permissions: { slug: string }[] }) {
+	return user.permissions.some((permission) => permission.slug === 'admin');
+}
+
 function cookies(request: FastifyRequest) {
 	return Object.fromEntries(
 		(request.headers.cookie ?? '')
@@ -156,12 +169,7 @@ export function registerAuth(app: FastifyInstance, prisma: PrismaClient) {
 	);
 
 	app.get('/api/auth/me', async (request: FastifyRequest, reply: FastifyReply) => {
-		const session = decodeSession(cookies(request)[sessionCookie]);
-		if (!session) return reply.code(401).send({ user: null });
-		const user = await prisma.user.findUnique({
-			where: { id: session.userId },
-			select: { id: true, email: true, name: true }
-		});
+		const user = await authenticatedUser(request, prisma);
 		return user ? { user } : reply.code(401).send({ user: null });
 	});
 
