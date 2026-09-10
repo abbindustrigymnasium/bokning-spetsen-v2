@@ -35,10 +35,11 @@ The Fastify API runs separately from the SvelteKit frontend:
 pnpm run dev:backend
 ```
 
-It listens on `http://localhost:3001` by default. The API exposes
-`GET /api/health`, `GET /api/users`, and `POST /api/users`. Set `PORT` or
-`HOST` to change the bind address. User routes use the Prisma schema and
-require `DATABASE_URL` to be set.
+It listens on `http://localhost:3001` by default. The API exposes health, user, site administration,
+and authenticated site-aware booking routes. Bookings require `siteId`, `startsAt`, and `endsAt`;
+overlapping bookings are rejected per site, so the same time can be booked at different sites. Set
+`PORT` or `HOST` to change the bind address. User routes use the Prisma schema and require
+`DATABASE_URL` to be set.
 
 Regenerate the Prisma client after changing the schema with:
 

@@ -12,6 +12,8 @@ const sampleUsers = [
 	{ email: 'erik.nilsson@example.com', name: 'Erik Nilsson' }
 ];
 
+const sampleSites = ['Spetsen A', 'Spetsen B'];
+
 const sampleBookingTimes = [
 	{ userIndex: 0, weekDay: 0, start: '09:00', end: '10:30' },
 	{ userIndex: 0, weekDay: 2, start: '13:00', end: '14:00' },
@@ -31,17 +33,24 @@ try {
 			})
 		)
 	);
+	const sites = await Promise.all(
+		sampleSites.map((name) =>
+			prisma.site.upsert({ where: { name }, update: { active: true }, create: { name } })
+		)
+	);
 
 	const week = currentStockholmWeek();
 	await Promise.all(
-		sampleBookingTimes.map(({ userIndex, weekDay, start, end }) => {
+		sampleBookingTimes.map(({ userIndex, weekDay, start, end }, index) => {
 			const date = week[weekDay];
+			const site = sites[index % sites.length];
 			return prisma.booking.upsert({
 				where: {
 					id: `00000000-0000-4000-8000-${(userIndex * 10 + weekDay + 1).toString().padStart(12, '0')}`
 				},
 				update: {
 					userId: users[userIndex].id,
+					siteId: site.id,
 					dayIndex: dayIndex(date),
 					startsAt: stockholmDateTime(date, start),
 					endsAt: stockholmDateTime(date, end)
@@ -49,6 +58,7 @@ try {
 				create: {
 					id: `00000000-0000-4000-8000-${(userIndex * 10 + weekDay + 1).toString().padStart(12, '0')}`,
 					userId: users[userIndex].id,
+					siteId: site.id,
 					dayIndex: dayIndex(date),
 					startsAt: stockholmDateTime(date, start),
 					endsAt: stockholmDateTime(date, end)
