@@ -59,6 +59,25 @@ permission. Run it only against the intended production database:
 nix-shell --run 'pnpm run db:seed:prod'
 ```
 
+## Microsoft Entra ID login
+
+Create a **Web** redirect URI in the Entra app registration matching `ENTRA_REDIRECT_URI`, for
+example `http://localhost:5173/auth`. Configure these backend environment variables:
+
+```sh
+ENTRA_CLIENT_ID=your-application-client-id
+ENTRA_DIRECTORY_ID=your-directory-tenant-id
+ENTRA_SECRET_ID=your-secret-id # informational only
+ENTRA_VALUE=your-secret-value # the actual client secret value
+ENTRA_REDIRECT_URI=http://localhost:5173/auth
+SESSION_SECRET=use-a-long-random-value
+FRONTEND_URL=http://localhost:5173
+```
+
+The frontend API origin can be changed with `VITE_API_URL`. The login flow uses authorization code
+with PKCE, validates the token through MSAL, creates or updates the local user, and stores only a
+signed, HTTP-only session cookie.
+
 ## Building
 
 To create a production version of your app:
