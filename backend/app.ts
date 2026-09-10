@@ -1,14 +1,16 @@
 import cors from '@fastify/cors';
 import Fastify from 'fastify';
 import { PrismaClient } from '@prisma/client';
+import { registerAuth } from './auth.js';
 
 export function buildApp() {
 	const app = Fastify({ logger: true });
 	const prisma = new PrismaClient();
 
-	app.register(cors, { origin: true });
+	app.register(cors, { origin: process.env.FRONTEND_URL ?? 'http://localhost:5173', credentials: true });
 
 	app.get('/api/health', async () => ({ status: 'ok' }));
+	registerAuth(app, prisma);
 
 	app.get('/api/users', async () => prisma.user.findMany({ orderBy: { createdAt: 'desc' } }));
 
