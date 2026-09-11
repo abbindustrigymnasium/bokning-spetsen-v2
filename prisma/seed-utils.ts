@@ -2,6 +2,12 @@ import { PrismaClient } from '@prisma/client';
 
 export const prisma = new PrismaClient();
 
+const permissionDefinitions = [
+	{ name: 'Student', slug: 'student', description: 'Can view and create bookings' },
+	{ name: 'Teacher', slug: 'teacher', description: 'Can access teacher-level features' },
+	{ name: 'Administrator', slug: 'admin', description: 'Can manage the application' }
+] as const;
+
 const STOCKHOLM_TIME_ZONE = 'Europe/Stockholm';
 const stockholmDateFormatter = new Intl.DateTimeFormat('en-CA', {
 	timeZone: STOCKHOLM_TIME_ZONE,
@@ -76,11 +82,16 @@ export function dayIndex(date: string): Date {
 }
 
 export async function seedAdmin() {
-	const adminPermission = await prisma.permission.upsert({
-		where: { slug: 'admin' },
-		update: { name: 'Administrator' },
-		create: { name: 'Administrator', slug: 'admin' }
-	});
+	const permissions = await Promise.all(
+		permissionDefinitions.map((permission) =>
+			prisma.permission.upsert({
+				where: { slug: permission.slug },
+				update: { name: permission.name, description: permission.description },
+				create: permission
+			})
+		)
+	);
+	const adminPermission = permissions.find((permission) => permission.slug === 'admin')!;
 
 	return prisma.user.upsert({
 		where: { email: 'gustav.pettersson.bjorklund@hitachigymnasiet.se' },

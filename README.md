@@ -78,7 +78,13 @@ FRONTEND_URL=http://localhost:5173
 
 The frontend API origin can be changed with `VITE_API_URL`. The login flow uses authorization code
 with PKCE, validates the token through MSAL, creates or updates the local user, and stores only a
-signed, HTTP-only session cookie.
+signed, HTTP-only session cookie. Microsoft app roles are synchronized to local permissions at
+login. `Student` maps to the student role, while `Teacher` temporarily maps to administrator for
+this version of the application. Accounts without a recognized `Student`, `Teacher`, or `Admin`
+role are denied access.
+
+Backend authorization uses an `admin > teacher > student` hierarchy. Administrators satisfy every
+role guard, teachers satisfy teacher and student guards, and students satisfy only student guards.
 
 ## Calendar configuration
 
