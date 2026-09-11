@@ -83,8 +83,8 @@ signed, HTTP-only session cookie.
 ## Calendar configuration
 
 The home page renders the reusable `src/lib/calendar.svelte` component. It loads active sites and
-only the bookings in the visible date range. Day, week, month, agenda, and list views are enabled by
-default, and users can combine or hide sites with the filter beside the calendar.
+only the bookings in the visible date range. Day, week, work-week, month, agenda, and list views are
+enabled by default, and users can combine or hide sites with the filter beside the calendar.
 
 Pass a `config` prop to change the available views, timezone, visible hours, or site colors:
 
@@ -92,7 +92,7 @@ Pass a `config` prop to change the available views, timezone, visible hours, or 
 <Calendar
 	config={{
 		defaultView: 'week',
-		enabledViews: ['week', 'day', 'month-grid', 'month-agenda', 'list'],
+		enabledViews: ['week', 'work-week', 'day', 'month-grid', 'month-agenda', 'list'],
 		timezone: 'Europe/Stockholm',
 		dayStart: '07:00',
 		dayEnd: '22:00',

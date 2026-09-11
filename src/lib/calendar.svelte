@@ -1,6 +1,7 @@
 <script lang="ts">
 	import {
 		createCalendar,
+		createPreactView,
 		createViewDay,
 		createViewList,
 		createViewMonthAgenda,
@@ -14,7 +15,7 @@
 	import 'temporal-polyfill/global';
 	import { onMount } from 'svelte';
 
-	type CalendarView = 'day' | 'week' | 'month-grid' | 'month-agenda' | 'list';
+	type CalendarView = 'day' | 'week' | 'work-week' | 'month-grid' | 'month-agenda' | 'list';
 
 	type Site = {
 		id: string;
@@ -47,9 +48,27 @@
 
 	const apiUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 	const palette = ['#2563eb', '#db2777', '#059669', '#d97706', '#7c3aed', '#0891b2', '#dc2626'];
+	function createWeekView(nDays: 5 | 7, name: 'week' | 'work-week', label: string) {
+		const weekView = createViewWeek();
+
+		return createPreactView({
+			...weekView,
+			name,
+			label,
+			setDateRange: (rangeConfig) => {
+				rangeConfig.calendarConfig.weekOptions.value = {
+					...rangeConfig.calendarConfig.weekOptions.value,
+					nDays
+				};
+				return weekView.setDateRange(rangeConfig);
+			}
+		});
+	}
+
 	const viewFactories: Record<CalendarView, () => ReturnType<typeof createViewDay>> = {
 		day: createViewDay,
-		week: createViewWeek,
+		week: () => createWeekView(7, 'week', 'Week'),
+		'work-week': () => createWeekView(5, 'work-week', 'Arbetsvecka'),
 		'month-grid': createViewMonthGrid,
 		'month-agenda': createViewMonthAgenda,
 		list: createViewList
@@ -172,7 +191,14 @@
 
 			const enabledViews = config.enabledViews?.length
 				? config.enabledViews
-				: (['week', 'day', 'month-grid', 'month-agenda', 'list'] satisfies CalendarView[]);
+				: ([
+						'week',
+						'work-week',
+						'day',
+						'month-grid',
+						'month-agenda',
+						'list'
+					] satisfies CalendarView[]);
 			const defaultView = enabledViews.includes(config.defaultView ?? 'week')
 				? (config.defaultView ?? 'week')
 				: enabledViews[0];
