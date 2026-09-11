@@ -124,4 +124,23 @@ pnpm run start:backend
 
 You can preview the production build with `npm run preview`.
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+## Deploying with Docker Compose
+
+Copy the deployment environment template, replace every placeholder, and start the stack:
+
+```sh
+cp .env.deploy.example .env.deploy
+docker compose --env-file .env.deploy -f compose.deploy.yaml up -d --build
+```
+
+The deployment starts Postgres, applies pending Prisma migrations, and then starts the API and
+SvelteKit frontend. Postgres is only available to containers in the Compose network. By default,
+the frontend is published on port `3000` and the API on port `3001`; put both behind HTTPS in
+production and use their public URLs for `FRONTEND_URL`, `VITE_API_URL`, and the Entra redirect URI.
+
+To create the initial production administrator after the services are running:
+
+```sh
+docker compose --env-file .env.deploy -f compose.deploy.yaml run --rm \
+  --entrypoint npx migrate tsx prisma/seed.prod.ts
+```

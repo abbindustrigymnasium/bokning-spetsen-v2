@@ -1,0 +1,105 @@
+name: bokning-spetsen
+
+x-app-build: &app-build
+  context: .
+  target: app
+  args:
+    VITE_API_URL: ${VITE_API_URL:?Set VITE_API_URL to the public API URL}
+
+x-app-runtime: &app-runtime
+  image: ${APP_IMAGE:-bokning-spetsen:latest}
+  build: *app-build
+  init: true
+  restart: unless-stopped
+  read_only: true
+  tmpfs:
+    - /tmp
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-bokning_spetsen}
+      POSTGRES_USER: ${POSTGRES_USER:-bokning_spetsen}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  migrate:
+    image: ${MIGRATOR_IMAGE:-bokning-spetsen-migrator:latest}
+    build:
+      context: .
+      target: migrator
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: no
+
+  backend:
+    <<: *app-runtime
+    command: [node, build/backend/backend/server.js]
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3001
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL}
+      ENTRA_CLIENT_ID: ${ENTRA_CLIENT_ID:?Set ENTRA_CLIENT_ID}
+      ENTRA_DIRECTORY_ID: ${ENTRA_DIRECTORY_ID:?Set ENTRA_DIRECTORY_ID}
+      ENTRA_VALUE: ${ENTRA_VALUE:?Set ENTRA_VALUE}
+      ENTRA_REDIRECT_URI: ${ENTRA_REDIRECT_URI:?Set ENTRA_REDIRECT_URI}
+      SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET}
+      FRONTEND_URL: ${FRONTEND_URL:?Set FRONTEND_URL}
+    ports:
+      - '${BIND_ADDRESS:-0.0.0.0}:${BACKEND_PORT:-3001}:3001'
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:3001/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  frontend:
+    <<: *app-runtime
+    command: [node, build/index.js]
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+    ports:
+      - '${BIND_ADDRESS:-0.0.0.0}:${FRONTEND_PORT:-3000}:3000'
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:3000/').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  postgres_data:
