@@ -12,7 +12,10 @@ export async function usersRoutes(
 	{ prisma, authorization }: UsersRouteOptions
 ) {
 	app.get('/api/users', { preHandler: authorization.requireAdmin }, async () =>
-		prisma.user.findMany({ orderBy: { createdAt: 'desc' } })
+		prisma.user.findMany({
+			include: { permissions: { select: { slug: true } } },
+			orderBy: { createdAt: 'desc' }
+		})
 	);
 
 	app.post<{ Body: { email: string; name?: string } }>(
