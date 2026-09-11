@@ -5,6 +5,7 @@ import type { PrismaClient } from '@prisma/client';
 
 const sessionCookie = 'bokning_session';
 const oauthCookie = 'bokning_oauth';
+const defaultDevelopmentUserEmail = 'example@mail.com';
 // Sign-in only. No Microsoft Graph permission is needed because identity claims
 // from the ID token are sufficient to create the local session.
 const scopes = ['openid', 'profile', 'email'];
@@ -58,6 +59,13 @@ function decodeSession(value?: string) {
 }
 
 export async function authenticatedUser(request: FastifyRequest, prisma: PrismaClient) {
+	if (process.env.NODE_ENV === 'development') {
+		return prisma.user.findUnique({
+			where: { email: process.env.DEV_USER_EMAIL ?? defaultDevelopmentUserEmail },
+			include: { permissions: { select: { slug: true } } }
+		});
+	}
+
 	const session = decodeSession(cookies(request)[sessionCookie]);
 	if (!session) return undefined;
 	return prisma.user.findUnique({

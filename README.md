@@ -39,7 +39,9 @@ It listens on `http://localhost:3001` by default. The API exposes health, user, 
 and authenticated site-aware booking routes. Bookings require `siteId`, `startsAt`, and `endsAt`;
 overlapping bookings are rejected per site, so the same time can be booked at different sites. Set
 `PORT` or `HOST` to change the bind address. User routes use the Prisma schema and require
-`DATABASE_URL` to be set.
+`DATABASE_URL` to be set. `pnpm run dev:backend` runs with `NODE_ENV=development`, which bypasses
+Microsoft login by using the seeded administrator account. Set `DEV_USER_EMAIL` to use another
+local user instead. The bypass is disabled for every other `NODE_ENV` value.
 
 Regenerate the Prisma client after changing the schema with:
 
