@@ -39,9 +39,8 @@ It listens on `http://localhost:3001` by default. The API exposes health, user, 
 and authenticated site-aware booking routes. Bookings require `siteId`, `startsAt`, and `endsAt`;
 overlapping bookings are rejected per site, so the same time can be booked at different sites. Set
 `PORT` or `HOST` to change the bind address. User routes use the Prisma schema and require
-`DATABASE_URL` to be set. `pnpm run dev:backend` runs with `NODE_ENV=development`, which bypasses
-Microsoft login by using the seeded administrator account. Set `DEV_USER_EMAIL` to use another
-local user instead. The bypass is disabled for every other `NODE_ENV` value.
+`DATABASE_URL` to be set. Authenticated routes use Microsoft login and the signed session cookie in
+every environment.
 
 Regenerate the Prisma client after changing the schema with:
 
@@ -80,6 +79,33 @@ FRONTEND_URL=http://localhost:5173
 The frontend API origin can be changed with `VITE_API_URL`. The login flow uses authorization code
 with PKCE, validates the token through MSAL, creates or updates the local user, and stores only a
 signed, HTTP-only session cookie.
+
+## Calendar configuration
+
+The home page renders the reusable `src/lib/calendar.svelte` component. It loads active sites and
+only the bookings in the visible date range. Day, week, month, agenda, and list views are enabled by
+default, and users can combine or hide sites with the filter beside the calendar.
+
+Pass a `config` prop to change the available views, timezone, visible hours, or site colors:
+
+```svelte
+<Calendar
+	config={{
+		defaultView: 'week',
+		enabledViews: ['week', 'day', 'month-grid', 'month-agenda', 'list'],
+		timezone: 'Europe/Stockholm',
+		dayStart: '07:00',
+		dayEnd: '22:00',
+		siteColors: {
+			'Site name': '#2563eb',
+			'site-uuid': '#059669'
+		}
+	}}
+/>
+```
+
+Colors can be keyed by site ID (preferred) or site name. The component uses a stable fallback
+palette for sites without an explicit color.
 
 ## Building
 

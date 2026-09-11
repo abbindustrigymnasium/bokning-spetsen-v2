@@ -5,7 +5,6 @@ import type { PrismaClient } from '@prisma/client';
 
 const sessionCookie = 'bokning_session';
 const oauthCookie = 'bokning_oauth';
-const defaultDevelopmentUserEmail = 'example@mail.com';
 // Sign-in only. No Microsoft Graph permission is needed because identity claims
 // from the ID token are sufficient to create the local session.
 const scopes = ['openid', 'profile', 'email'];
@@ -59,13 +58,6 @@ function decodeSession(value?: string) {
 }
 
 export async function authenticatedUser(request: FastifyRequest, prisma: PrismaClient) {
-	if (process.env.NODE_ENV === 'development') {
-		return prisma.user.findUnique({
-			where: { email: process.env.DEV_USER_EMAIL ?? defaultDevelopmentUserEmail },
-			include: { permissions: { select: { slug: true } } }
-		});
-	}
-
 	const session = decodeSession(cookies(request)[sessionCookie]);
 	if (!session) return undefined;
 	return prisma.user.findUnique({
@@ -157,7 +149,14 @@ export function registerAuth(app: FastifyInstance, prisma: PrismaClient) {
 					codeVerifier: oauth.codeVerifier
 				});
 				const claims = result?.idTokenClaims as
-					{ oid?: string; preferred_username?: string; email?: string; name?: string } | undefined;
+					| {
+							oid?: string;
+							preferred_username?: string;
+							email?: string;
+							name?: string;
+							roles?: string[];
+					  }
+					| undefined;
 				const email = claims?.preferred_username ?? claims?.email;
 				if (!email)
 					return reply.code(400).send({ error: 'Microsoft account has no email address' });
@@ -166,6 +165,12 @@ export function registerAuth(app: FastifyInstance, prisma: PrismaClient) {
 					update: { name: claims?.name },
 					create: { email, name: claims?.name }
 				});
+				if (process.env.NODE_ENV === 'development') {
+					request.log.info(
+						{ email: user.email, roles: claims?.roles ?? [] },
+						'Microsoft sign-in completed'
+					);
+				}
 				setCookie(reply, sessionCookie, encodeSession(user.id), 8 * 60 * 60);
 				setCookie(reply, oauthCookie, '', 0);
 				return reply.redirect(process.env.FRONTEND_URL ?? 'http://localhost:5173');

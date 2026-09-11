@@ -50,8 +50,14 @@
 	"dependencies": {
 		"@azure/msal-node": "^6.0.0",
 		"@fastify/cors": "^11.3.0",
+		"@preact/signals": "^2.11.2",
 		"@prisma/client": "^6.16.2",
+		"@schedule-x/calendar": "^3.7.3",
+		"@schedule-x/svelte": "^3.0.0",
+		"@schedule-x/theme-default": "^3.7.3",
 		"dotenv": "^17.4.2",
-		"fastify": "^5.12.1"
+		"fastify": "^5.12.1",
+		"preact": "^10.29.8",
+		"temporal-polyfill": "^0.3.0"
 	}
 }
