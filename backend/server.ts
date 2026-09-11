@@ -5,6 +5,8 @@ const app = buildApp();
 const port = Number(process.env.PORT ?? 3001);
 const host = process.env.HOST ?? '0.0.0.0';
 
+app.log.trace({ configuredLevel: app.log.level }, 'Trace logging enabled');
+
 try {
 	await app.listen({ port, host });
 } catch (error) {

@@ -67,7 +67,8 @@ export async function authRoutes(
 	app: FastifyInstance,
 	{ prisma, authorization }: AuthRouteOptions
 ) {
-	app.get('/api/auth/login', async (_request: FastifyRequest, reply: FastifyReply) => {
+	app.get('/api/auth/login', async (request: FastifyRequest, reply: FastifyReply) => {
+		request.log.trace('Microsoft login started');
 		const state = randomBytes(24).toString('base64url');
 		const codeVerifier = randomBytes(48).toString('base64url');
 		const codeChallenge = createHash('sha256').update(codeVerifier).digest('base64url');
@@ -94,6 +95,10 @@ export async function authRoutes(
 			request: FastifyRequest<{ Querystring: { code?: string; state?: string; error?: string } }>,
 			reply: FastifyReply
 		) => {
+			request.log.trace(
+				{ hasCode: Boolean(request.query.code), hasError: Boolean(request.query.error) },
+				'Microsoft login callback received'
+			);
 			const saved = cookies(request)[oauthCookie];
 			let oauth: { state: string; codeVerifier: string } | undefined;
 			try {
@@ -124,6 +129,7 @@ export async function authRoutes(
 					codeVerifier: oauth.codeVerifier
 				});
 				const claims = result?.idTokenClaims as EntraClaims | undefined;
+				request.log.trace({ roles: claims?.roles ?? [] }, 'Microsoft roles returned');
 				const email = claims?.preferred_username ?? claims?.email;
 				if (!email)
 					return reply.code(400).send({ error: 'Microsoft account has no email address' });
@@ -137,12 +143,6 @@ export async function authRoutes(
 				}
 
 				const user = await syncUserPermissions(prisma, { email, name: claims?.name }, permissions);
-				if (process.env.NODE_ENV === 'development') {
-					request.log.info(
-						{ email: user.email, roles: claims?.roles ?? [], permissions },
-						'Microsoft sign-in completed'
-					);
-				}
 				setCookie(reply, sessionCookie, encodeSession(user.id), 8 * 60 * 60);
 				setCookie(reply, oauthCookie, '', 0);
 				return reply.redirect(process.env.FRONTEND_URL ?? 'http://localhost:5173');

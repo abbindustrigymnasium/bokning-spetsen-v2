@@ -9,7 +9,22 @@ import { sitesRoutes } from './routes/sites.js';
 import { usersRoutes } from './routes/users.js';
 
 export function buildApp() {
-	const app = Fastify({ logger: true });
+	const app = Fastify({
+		logger: {
+			level: process.env.LOG_LEVEL ?? 'trace',
+			serializers: {
+				req(request) {
+					return {
+						method: request.method,
+						url: request.url?.split('?')[0],
+						host: request.headers.host,
+						remoteAddress: request.socket.remoteAddress,
+						remotePort: request.socket.remotePort
+					};
+				}
+			}
+		}
+	});
 	const prisma = new PrismaClient();
 	const authorization = createAuthorization(prisma);
 	app.decorateRequest('user', null);
