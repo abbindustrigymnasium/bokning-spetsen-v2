@@ -19,7 +19,6 @@
 
 	<Calendar />
 </main>
-hello
 
 <style>
 	:global(body) {
